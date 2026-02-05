@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zweig-chess-engine"
+version = "0.2.0"
+description = "Human-aligned chess engine that predicts human-like moves at different skill levels"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "ygkali", email = "ygkali@users.noreply.github.com"}
+]
+keywords = ["chess", "machine-learning", "pytorch", "ai", "maia", "zweig", "human-aligned"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Games/Entertainment :: Board Games",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "python-chess>=1.999",
+    "zstandard>=0.21.0",
+    "requests>=2.31.0",
+    "tqdm>=4.65.0",
+    "huggingface_hub>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.7.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pytest-cov>=4.1.0",
+]
+training = [
+    "tensorboard>=2.14.0",
+    "wandb>=0.15.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ygkali/zweig-chess-engine"
+Documentation = "https://github.com/ygkali/zweig-chess-engine/tree/main/docs"
+Repository = "https://github.com/ygkali/zweig-chess-engine"
+"Bug Tracker" = "https://github.com/ygkali/zweig-chess-engine/issues"
+"Model Hub" = "https://huggingface.co/ygkla/zweig-chess-engine-models"
+"Dataset" = "https://huggingface.co/datasets/ygkla/zweig-chess-engine-processed"
+
+[project.scripts]
+zweig-train = "scripts.trainer:main"
+zweig-infer = "scripts.inference:main"
+zweig-data = "scripts.data_pipeline:main"
+
+[tool.setuptools.packages.find]
+include = ["src*", "scripts*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | archive
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

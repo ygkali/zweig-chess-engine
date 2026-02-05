@@ -1,0 +1,22 @@
+# Core dependencies
+torch>=2.0.0
+numpy>=1.24.0
+python-chess>=1.999
+
+# Data processing
+zstandard>=0.21.0
+requests>=2.31.0
+tqdm>=4.65.0
+
+# HuggingFace Hub (model & dataset download)
+huggingface_hub>=0.20.0
+
+# Optional: Training utilities
+tensorboard>=2.14.0
+wandb>=0.15.0
+
+# Optional: Development
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0
