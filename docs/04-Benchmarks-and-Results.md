@@ -9,7 +9,7 @@ This document presents the quantitative performance of the models, comparing the
 | **Training Strategy** | Base Model + Fine-Tune | Trained from Scratch |
 | **Target ELO** | 2400+ (Grandmaster) | 2400+ (Grandmaster) |
 | **Total Training Time** | ~39 Hours (33+6) | ~7 Hours |
-| **Top-1 Accuracy** | **~49.9%** 🥇 | ~44.0% |
+| **Top-1 Accuracy (2400+)** | **~52%** 🥇 | ~44.0% |
 
 ### 📉 The "Architecture vs. Data" Trade-off
 
@@ -26,11 +26,11 @@ Despite Maia-2 having a superior architecture (19 channels including Castling Ri
 
 The following table demonstrates the Legacy model's performance across different skill levels when tested on the 2022 Unseen Dataset.
 
-| Model Variant | Test Set (GM Data) Accuracy | Interpretation |
-| :--- | :--- | :--- |
-| **Average (1450)** | 45.41% | Struggles to predict GM moves (Too random). |
-| **Master (2200)** | 49.91% | **High alignment** with GM logic. |
-| **Grandmaster (2400+)** | 49.37% | Excellent prediction capability. |
+| Model Variant | Top-1 | Top-3 | Top-5 | Interpretation |
+| :--- | :--- | :--- | :--- | :--- |
+| **Average (1450)** | ~47% | — | — | Struggles to predict GM moves (Too random). |
+| **Master (2200)** | ~51% | — | — | **High alignment** with GM logic. |
+| **Grandmaster (2400+)** | ~52% | ~75% | ~85% | Excellent prediction capability. |
 
 > **Conclusion:** The model successfully captured stylistic differences. A model trained on 1450 ELO data predicts GM moves significantly worse than a model trained on 2200+ data, proving that "Skill" is a learnable feature.
 

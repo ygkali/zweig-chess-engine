@@ -31,7 +31,6 @@ class TestModels:
         model = Maia2_New(vocab_size=VOCAB_SIZE)
         batch_size = 4
         x = torch.randn(batch_size, MAIA2_CHANNELS, 8, 8)
-        # Use real ELO values (400-3200 range)
         my_elo = torch.randint(ELO_MIN, ELO_MAX, (batch_size,))
         opp_elo = torch.randint(ELO_MIN, ELO_MAX, (batch_size,))
 
@@ -45,7 +44,6 @@ class TestModels:
         model = Maia2_New(vocab_size=VOCAB_SIZE)
         x = torch.randn(2, MAIA2_CHANNELS, 8, 8)
         
-        # Test with min and max ELO
         my_elo = torch.tensor([ELO_MIN, ELO_MAX - 1])
         opp_elo = torch.tensor([ELO_MAX - 1, ELO_MIN])
         
@@ -63,7 +61,6 @@ class TestModels:
 
         assert legacy_params > 0
         assert maia2_params > 0
-        # Maia-2 should have more parameters due to ELO embeddings
         assert maia2_params > legacy_params
 
     def test_model_gradient_flow(self):
@@ -78,7 +75,6 @@ class TestModels:
         loss = torch.nn.functional.cross_entropy(output, target)
         loss.backward()
 
-        # Check that at least some gradients are non-zero
         has_grad = any(
             param.grad is not None and torch.abs(param.grad).sum() > 0
             for param in model.parameters()
@@ -100,7 +96,7 @@ class TestUtils:
         """Test vocabulary is cached."""
         vocab1 = create_vocab()
         vocab2 = create_vocab()
-        assert vocab1 is vocab2  # Same object (cached)
+        assert vocab1 is vocab2
         
     def test_mirror_move(self):
         """Test move mirroring."""
@@ -108,7 +104,6 @@ class TestUtils:
         mirrored = mirror_move(move)
         assert mirrored.uci() == "e7e5"
         
-        # Test promotion
         promo_move = chess.Move.from_uci("e7e8q")
         mirrored_promo = mirror_move(promo_move)
         assert mirrored_promo.uci() == "e2e1q"
@@ -149,17 +144,15 @@ class TestTensorConversion:
         board = chess.Board()
         tensor = board_to_tensor_14ch(board)
         
-        # White pawns should be on rank 2 (index 6 in tensor due to flip)
-        # Channel 0 is white pawns
-        assert tensor[0, 6, :].sum() == 8  # 8 white pawns
+        # Channel 0 = white pawns, row index 6 due to board flip
+        assert tensor[0, 6, :].sum() == 8
         
     def test_castling_rights(self):
         """Test castling rights encoding in 19ch."""
         board = chess.Board()
         tensor = board_to_tensor_19ch(board)
         
-        # All castling rights should be 1 at start
-        assert tensor[13, 0, 0] == 1.0  # White kingside
-        assert tensor[14, 0, 0] == 1.0  # White queenside
-        assert tensor[15, 0, 0] == 1.0  # Black kingside
-        assert tensor[16, 0, 0] == 1.0  # Black queenside
+        assert tensor[13, 0, 0] == 1.0  # WK
+        assert tensor[14, 0, 0] == 1.0  # WQ
+        assert tensor[15, 0, 0] == 1.0  # BK
+        assert tensor[16, 0, 0] == 1.0  # BQ

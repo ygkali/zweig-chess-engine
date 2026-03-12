@@ -53,7 +53,6 @@ def download_from_huggingface(output_dir: str, buckets: Optional[List[int]] = No
     os.makedirs(output_dir, exist_ok=True)
     
     try:
-        # List available files
         files = list_repo_files(HF_DATASET_REPO, repo_type="dataset")
         pgn_files = [f for f in files if f.endswith(".pgn")]
         
@@ -61,7 +60,6 @@ def download_from_huggingface(output_dir: str, buckets: Optional[List[int]] = No
             logger.warning("No .pgn files found in repository")
             return False
         
-        # Filter by bucket if specified
         if buckets:
             bucket_strs = [f"{b:02d}" for b in buckets]
             pgn_files = [f for f in pgn_files if any(f"train_{b}" in f or f"_{b}_" in f for b in bucket_strs)]

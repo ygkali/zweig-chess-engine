@@ -28,7 +28,7 @@ The dataset contains 11.15M human chess games from Lichess, bucketed into 12 ELO
 ## Features
 
 - **ELO-Specific Predictions**: Separate models trained for 12 different skill levels
-- **Skill-Aware Architecture**: Maia-2 incorporates player ELO through attention mechanisms
+- **Skill-Aware Architecture**: Maia-2 incorporates player ELO through sigmoid gating (feature modulation)
 - **Rule-Aware Input**: Full encoding of castling rights, en-passant, and repetition
 - **Scalable Data Pipeline**: Automated downloading and processing of Lichess game databases
 - **ResNet-Based**: 12-layer residual network preserving spatial information
@@ -38,15 +38,18 @@ The dataset contains 11.15M human chess games from Lichess, bucketed into 12 ELO
 ### Input Representation
 
 **Legacy (14 channels)**:
-- Channels 0-11: Piece positions (White & Black)
-- Channels 12-13: Repetition counter
+- Channels 0-5: White pieces (P, N, B, R, Q, K)
+- Channels 6-11: Black pieces (P, N, B, R, Q, K)
+- Channel 12: Repetition flag
+- Channel 13: Normalized move count
 
 **Maia-2 (19 channels)**:
-- Channels 0-11: Piece positions (White & Black)
-- Channels 12-13: Repetition counter
-- Channel 14: Side to move
-- Channels 15-16: White castling rights (K-side & Q-side)
-- Channels 17-18: Black castling rights (K-side & Q-side)
+- Channels 0-5: White pieces (P, N, B, R, Q, K)
+- Channels 6-11: Black pieces (P, N, B, R, Q, K)
+- Channel 12: Repetition flag
+- Channels 13-16: Castling rights (WK, WQ, BK, BQ)
+- Channel 17: En passant square
+- Channel 18: Normalized move count
 
 ### Network Architecture
 
@@ -177,9 +180,9 @@ python scripts/trainer.py --config maia_06 --arch maia2
 
 Default hyperparameters:
 - **Batch Size**: 8192 positions
-- **Learning Rate**: 1e-5
+- **Learning Rate**: 2e-5
 - **Total Steps**: 30,000
-- **Optimizer**: Adam
+- **Optimizer**: AdamW (weight_decay=1e-4)
 - **Loss**: Cross-Entropy
 
 ## Documentation

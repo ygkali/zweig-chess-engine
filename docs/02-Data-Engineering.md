@@ -23,8 +23,8 @@ We processed the raw data and split it into 12 distinct buckets based on the fol
 
 | ID | ELO Range | Population % | Description |
 | :--- | :--- | :--- | :--- |
-| **01** | 400 - 1050 | 8.3% | Novice |
-| **02** | 1051 - 1200 | 9.6% | Beginner |
+| **01** | 400 - 1000 | 8.3% | Novice |
+| **02** | 1001 - 1200 | 9.6% | Beginner |
 | **03** | 1201 - 1325 | 11.6% | Casual Player |
 | **04** | 1326 - 1425 | 11.4% | Lower Intermediate |
 | **05** | 1426 - 1500 | 9.1% | Intermediate |
@@ -34,7 +34,7 @@ We processed the raw data and split it into 12 distinct buckets based on the fol
 | **09** | 1751 - 1875 | 9.8% | Strong Club Player |
 | **10** | 1876 - 2100 | 8.8% | Expert |
 | **11** | 2101 - 2400 | 3.3% | Master Level |
-| **12** | 2401 - 3000 | 0.3% | Elite / Top Tier |
+| **12** | 2401 - 3200 | 0.3% | Elite / Top Tier |
 
 
 
@@ -63,6 +63,6 @@ Before training, raw PGN moves are converted into a format the Neural Network ca
     * Games shorter than 10 moves are discarded.
 3.  **Encoding:**
     * **Input:** The board state is serialized into Bitboards (See Architecture doc).
-    * **Label:** The human move is encoded as an index (0-1968) representing the specific move in the UCI format (e.g., `e2e4`).
+    * **Label:** The human move is encoded as an index (0-4207) from a vocabulary of 4208 possible UCI moves including promotions (e.g., `e2e4`, `e7e8q`).
 
 ---

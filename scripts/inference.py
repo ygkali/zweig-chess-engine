@@ -54,13 +54,11 @@ def download_model_from_hf(model_name: str, output_dir: str = None) -> Optional[
         output_dir = DEFAULT_CHECKPOINT_DIR
     os.makedirs(output_dir, exist_ok=True)
     
-    # Resolve model name to filename
     if model_name in HF_MODEL_FILES:
         filename = HF_MODEL_FILES[model_name]
     elif model_name.endswith(".pth"):
         filename = model_name
     else:
-        # Try to find matching file
         try:
             files = list_repo_files(HF_MODEL_REPO)
             matches = [f for f in files if model_name in f and f.endswith(".pth")]
@@ -106,16 +104,13 @@ def resolve_model_path(model_arg: str) -> Optional[str]:
     Resolve model argument to a local file path.
     Downloads from HuggingFace if needed.
     """
-    # Check if it's a local path
     if os.path.exists(model_arg):
         return model_arg
     
-    # Check in checkpoints directory
     checkpoint_path = os.path.join(DEFAULT_CHECKPOINT_DIR, model_arg)
     if os.path.exists(checkpoint_path):
         return checkpoint_path
     
-    # Check if it's a model name with .pth
     if not model_arg.endswith(".pth"):
         if model_arg in HF_MODEL_FILES:
             filename = HF_MODEL_FILES[model_arg]
@@ -123,12 +118,10 @@ def resolve_model_path(model_arg: str) -> Optional[str]:
             if os.path.exists(checkpoint_path):
                 return checkpoint_path
     
-    # Check in finetuned_models directory
     finetuned_path = os.path.join(DEFAULT_SAVE_DIR, model_arg)
     if os.path.exists(finetuned_path):
         return finetuned_path
     
-    # Try to download from HuggingFace
     logger.info(f"Model not found locally, attempting HuggingFace download...")
     return download_model_from_hf(model_arg)
 
@@ -143,7 +136,6 @@ def load_model(
     model = Maia1_Legacy(vocab_size=VOCAB_SIZE).to(device) if is_legacy else Maia2_New(vocab_size=VOCAB_SIZE).to(device)
     
     try:
-        # Try secure load first
         try:
             cp = torch.load(path, map_location=device, weights_only=True)
         except Exception:
@@ -192,20 +184,18 @@ def get_top_moves(
     inv_vocab = {idx: uci for uci, idx in vocab.items()}
     tensor_func = board_to_tensor_14ch if is_legacy else board_to_tensor_19ch
 
-    # Mirror if black's turn (model always learns from "our" perspective)
+    # Model always sees the board from the side-to-move as white
     if board.turn == chess.BLACK:
         board_t = tensor_func(board.mirror())
     else:
         board_t = tensor_func(board)
 
-    # [1, C, 8, 8]
     x = torch.from_numpy(board_t).unsqueeze(0).float().to(device)
 
     with torch.no_grad():
         if is_legacy:
             logits = model(x, my_elo=None, opp_elo=None)
         else:
-            # ELO value is given directly, converted to index inside the model
             elo_t = torch.tensor([elo], dtype=torch.long, device=device)
             logits = model(x, elo_t, elo_t)
 
@@ -215,7 +205,6 @@ def get_top_moves(
     moves: List[Tuple[str, float]] = []
     for prob, idx in zip(top_probs.tolist(), top_indices.tolist()):
         uci = inv_vocab.get(idx, "????")
-        # Mirror the move if it's black's turn
         if board.turn == chess.BLACK and uci != "????":
             try:
                 m = chess.Move.from_uci(uci)
@@ -294,12 +283,10 @@ Models: {HF_MODEL_URL}
 
     args = parser.parse_args()
 
-    # Handle --list
     if args.list:
         list_available_models()
         sys.exit(0)
 
-    # Handle --download
     if args.download:
         path = download_model_from_hf(args.download)
         if path:
@@ -308,11 +295,9 @@ Models: {HF_MODEL_URL}
         else:
             sys.exit(1)
 
-    # Require --model for inference
     if not args.model:
         parser.error("--model is required for inference. Use --list to see available models.")
 
-    # Resolve model path (download if needed)
     path = resolve_model_path(args.model)
     if not path:
         logger.error(f"Model not found: {args.model}")

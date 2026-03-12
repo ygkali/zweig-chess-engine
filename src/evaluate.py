@@ -34,7 +34,6 @@ def load_model_safe(
     model = Maia1_Legacy(vocab_size).to(device) if is_legacy else Maia2_New(vocab_size).to(device)
     
     try:
-        # Try secure load first
         try:
             cp = torch.load(path, map_location=device, weights_only=True)
         except Exception:
@@ -89,7 +88,6 @@ def evaluate_single_model(
             if is_legacy:
                 logits = model(b, my_elo=None, opp_elo=None)
             else:
-                # ELO values are given directly, converted to index inside the model
                 my_elo = batch["my_elo"].to(device).long()
                 opp_elo = batch["opp_elo"].to(device).long()
                 logits = model(b, my_elo, opp_elo)

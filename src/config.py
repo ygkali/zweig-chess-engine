@@ -47,7 +47,6 @@ DEFAULT_CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints")
 DEFAULT_RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "raw")
 
 # --- HF MODEL FILES ---
-# Model filenames (as stored on HuggingFace)
 HF_MODEL_FILES: Dict[str, str] = {
     "maia_base": "maia_base.pth",
     "maia_01": "maia_finetuned_train_01_400-1000.pth",

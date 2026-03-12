@@ -86,6 +86,9 @@ site/
 # Claude Code
 .claude/
 
+# Benchmark scripts (experimental)
+scripts/benchmark_full.py
+
 # Microsoft Office temporary files
 ~$*.docx
 ~$*.doc

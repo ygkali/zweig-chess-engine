@@ -30,14 +30,12 @@ def preflight_check(args: argparse.Namespace) -> bool:
     """Pre-training validation checks."""
     logger.info("=== Pre-Flight Check ===")
 
-    # 1. Data directory
     if not os.path.exists(args.data_dir):
         logger.error(f"Data directory not found: {args.data_dir}")
         logger.info("First run: python scripts/data_pipeline.py --source huggingface")
         return False
     logger.info(f"OK: Data directory exists: {args.data_dir}")
 
-    # 2. PGN file
     cfg = get_config_by_name(args.config)
     if not cfg:
         logger.error(f"Config not found: {args.config}")
@@ -48,13 +46,11 @@ def preflight_check(args: argparse.Namespace) -> bool:
         return False
     logger.info(f"OK: PGN exists: {cfg.pgn_file}")
 
-    # 3. Base model (optional)
     if args.base_model and not os.path.exists(args.base_model):
         logger.warning(f"Base model not found: {args.base_model}")
     elif args.base_model:
         logger.info(f"OK: Base model: {args.base_model}")
 
-    # 4. GPU
     try:
         import torch
         if torch.cuda.is_available():
@@ -65,7 +61,6 @@ def preflight_check(args: argparse.Namespace) -> bool:
         logger.error("torch is not installed")
         return False
 
-    # 5. Save directory
     os.makedirs(args.save_dir, exist_ok=True)
     logger.info(f"OK: Save directory: {args.save_dir}")
 
@@ -167,7 +162,6 @@ Examples:
     if not args.skip_check and not preflight_check(args):
         sys.exit(1)
 
-    # Use programmatic API - no sys.argv manipulation
     from src.train import train_with_args
     
     try:

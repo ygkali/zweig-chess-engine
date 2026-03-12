@@ -29,7 +29,6 @@ from src.config import (
 
 logger = logging.getLogger(__name__)
 
-# Optional Zstandard import
 try:
     import zstandard as zstd
 except ImportError:
@@ -49,7 +48,6 @@ class BaseChessDataset(IterableDataset, ABC):
         self.buffer_size = config.get("shuffle_buffer_size", DEFAULT_SHUFFLE_BUFFER)
         self.debug_mode = config.get("debug", False)
         
-        # Resource tracking
         self._raw_file: Optional[BinaryIO] = None
         self._parse_errors: int = 0
 
@@ -97,14 +95,12 @@ class BaseChessDataset(IterableDataset, ABC):
                     if game is None:
                         break
 
-                    # Worker Sharding Logic
                     if worker_info is not None:
                         if game_idx % worker_info.num_workers != worker_info.id:
                             game_idx += 1
                             continue
                     game_idx += 1
 
-                    # Delegate specific processing to child class
                     for item in self.process_game(game):
                         if len(buffer) < self.buffer_size:
                             buffer.append(item)
@@ -113,7 +109,6 @@ class BaseChessDataset(IterableDataset, ABC):
                             yield buffer[idx]
                             buffer[idx] = item
 
-            # Flush remaining buffer
             random.shuffle(buffer)
             for item in buffer:
                 yield item
@@ -135,7 +130,6 @@ class LegacyDataset(BaseChessDataset):
             ply_count += 1
             uci = move.uci()
             
-            # Filters
             if ply_count <= self.min_ply:
                 board.push(move)
                 continue
@@ -143,7 +137,6 @@ class LegacyDataset(BaseChessDataset):
                 board.push(move)
                 continue
 
-            # Data Generation (White/Black Mirroring)
             is_black = (board.turn == chess.BLACK)
             
             if is_black:

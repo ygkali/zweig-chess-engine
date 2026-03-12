@@ -17,7 +17,6 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.amp import autocast, GradScaler
 
-# Models and Datasets
 from src import Maia1_Legacy, Maia2_New, create_vocab, VOCAB_SIZE
 from src.dataset import LegacyDataset, Maia2Dataset
 from src.config import (
@@ -95,11 +94,10 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
         logger.warning(f"Skipping: {save_path} already exists. Use --force to overwrite.")
         return
 
-    # 2. Setup Device & Model Architecture
+    # 2. Setup Device & Model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     vocab = create_vocab()
     
-    # Architecture selection now comes from arguments (not Config)
     if args.arch == "maia2":
         model = Maia2_New(vocab_size=VOCAB_SIZE).to(device)
         DatasetClass = Maia2Dataset
@@ -113,10 +111,8 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
     if args.base_model and os.path.exists(args.base_model):
         logger.info(f"Loading Base Model: {args.base_model}")
         try:
-            # weights_only=True for security (prevents arbitrary code execution)
             cp = torch.load(args.base_model, map_location=device, weights_only=True)
         except Exception:
-            # Fallback for older checkpoints that may have non-tensor data
             logger.warning("weights_only load failed, falling back to full load")
             cp = torch.load(args.base_model, map_location=device)
             
@@ -139,7 +135,6 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
     optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=1e-4)
     scaler = GradScaler("cuda")
     
-    # Dataset Init
     ds = DatasetClass(pgn_path, vocab, {
         "min_ply": DEFAULT_MIN_PLY, 
         "shuffle_buffer_size": DEFAULT_SHUFFLE_BUFFER
@@ -170,7 +165,6 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
             optimizer.zero_grad(set_to_none=True)
             
             with autocast(device_type="cuda"):
-                # Forward pass varies by architecture
                 if args.arch == "maia2":
                     my_elo = batch["my_elo"].to(device, non_blocking=True)
                     opp_elo = batch["opp_elo"].to(device, non_blocking=True)
@@ -186,7 +180,6 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
             
             running_loss += loss.item()
 
-            # Logging
             if step % cfg.log_every == 0:
                 avg_loss = running_loss / cfg.log_every
                 elapsed = time.time() - start_t
@@ -195,12 +188,10 @@ def train_runner(cfg: TrainConfig, args: TrainArgs) -> None:
                 running_loss = 0.0
                 start_t = time.time()
 
-            # Intermediate Checkpoint
             if step % cfg.save_every == 0:
                 ckpt_path = os.path.join(args.save_dir, f"ckpt_{cfg.name}_{args.arch}_step_{step}.pth")
                 _save_checkpoint(model, ckpt_path, step, args.arch, VOCAB_SIZE)
 
-        # Final Save
         _save_checkpoint(model, save_path, step, args.arch, VOCAB_SIZE)
         logger.info(f"Done! Saved: {save_path} (step={step}, trained weights)")
 

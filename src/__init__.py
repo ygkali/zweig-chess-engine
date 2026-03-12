@@ -9,7 +9,6 @@ from __future__ import annotations
 from .model import Maia1_Legacy, Maia2_New
 from .utils import create_vocab, mirror_move, mirror_move_uci, get_inverse_vocab
 
-# Dynamically calculate vocabulary size (cached after first call)
 VOCAB_SIZE: int = len(create_vocab())
 
 __all__ = [

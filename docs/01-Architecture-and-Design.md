@@ -26,7 +26,8 @@ The model views the chessboard as an 8x8 tensor with 14 channels:
 
 * **Channels 0-5:** White Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
 * **Channels 6-11:** Black Pieces (Pawn, Knight, Bishop, Rook, Queen, King)
-* **Channels 12-13:** Repetition Counter (To detect draws by repetition)
+* **Channel 12:** Repetition Flag (1.0 if position has occurred ≥2 times)
+* **Channel 13:** Normalized Move Count (fullmove_number / 100)
 
 ### Limitations
 This architecture does not explicitly encode "Castling Rights" or "En-passant" possibilities. The model is expected to infer these rules implicitly from the board history or piece positions. This led to performance degradation in tactical positions where castling legality was the deciding factor.
@@ -41,31 +42,28 @@ Maia-2 is an advanced architecture designed to fix the rule-blindness of Gen-1 a
 Additional channels were introduced to give the model full awareness of the game rules:
 
 * **Channels 0-11:** Piece Positions (White & Black) - *Unchanged*
-* **Channels 12-13:** Repetition Counter - *Unchanged*
-* **Channel 14:** Side to Move (White/Black) - *New*
-* **Channels 15-16:** White Castling Rights (Kingside & Queenside) - *New*
-* **Channels 17-18:** Black Castling Rights (Kingside & Queenside) - *New*
+* **Channel 12:** Repetition Flag (1.0 if ≥2 repetitions) - *Unchanged*
+* **Channels 13-16:** Castling Rights (White Kingside, White Queenside, Black Kingside, Black Queenside) - *New*
+* **Channel 17:** En Passant Square - *New*
+* **Channel 18:** Normalized Move Count (fullmove_number / 200) - *New*
 
-> **Note:** En-passant target squares are also encoded into the relevant feature maps.
-
-### Metadata Integration (ELO-Awareness)
-The defining feature of Maia-2 is that it looks beyond the board. Two scalar values are injected into the network (concatenated before the fully connected layers):
-
-1.  `My_ELO`: The rating of the player to move.
-2.  `Opp_ELO`: The rating of the opponent.
+### Metadata Integration (ELO-Awareness via Sigmoid Gating)
+The defining feature of Maia-2 is that it looks beyond the board. Two ELO values (`My_ELO`, `Opp_ELO`) are passed through an embedding layer and a linear projection to create a **skill gate**. This gate is applied via element-wise multiplication to the spatial feature maps directly after the Residual Blocks, modulating the representations before they enter the policy head.
 
 This allows the model to differentiate between a **1200 ELO blunder** and a **2500 ELO tactical sacrifice**.
 
 ```mermaid
 graph TD
-    A[Chess Position (FEN)] --> B{Preprocessing};
+    A[Chess Position FEN] --> B{Preprocessing};
     B -->|Board & Rules| C[8x8x19 Tensor];
-    B -->|Player Metadata| D[ELO Scalars];
-    C --> E[Convolutional Layers (ResNet)];
-    D --> E;
-    E --> F[Policy Head (Softmax)];
-    F --> G[Move Probability Distribution];
-
+    B -->|Player Metadata| D[My_ELO & Opp_ELO];
+    C --> E[12x ResBlock CNN];
+    D --> F[ELO Embedding + Projection];
+    F --> G[Sigmoid Skill Gate];
+    E -->|feat * skill_gate| H[Gated Features];
+    G --> H;
+    H --> I[Policy Head];
+    I --> J[Move Probability Distribution];
 ```
 
 ---
@@ -74,13 +72,9 @@ graph TD
 
 Both generations utilize Deep Convolutional Neural Networks (CNNs).
 
-* **Backbone:** Residual Network (ResNet). Residual blocks prevent the "Gradient Vanishing" problem during deep training and allow the model to learn long-range spatial dependencies on the board.
-* **Batch Size:**
-* A100 GPU Training: `12288` (Large batch for stability)
-* L4 GPU Training: `9216` (Memory optimized)
-
-
-* **Output:** The model outputs a probability distribution over all legal moves. The move with the highest probability is selected as the predicted human move.
+* **Backbone:** Residual Network with 12 Residual Blocks (256 filters, 3×3 kernels). Residual connections prevent the "Gradient Vanishing" problem and allow the model to learn long-range spatial dependencies on the board.
+* **Batch Size:** `8192` positions (adjustable based on GPU memory).
+* **Output:** The model outputs a probability distribution over 4208 possible UCI moves. The move with the highest probability is selected as the predicted human move.
 
 ---
 
@@ -94,8 +88,6 @@ While analyzing the Legacy model, we observed specific instances of "tactical bl
 
 Initially, we relied on Transfer Learning. However, the introduction of ELO metadata in Maia-2 changed the input structure fundamentally, making it difficult to use weights from a standard (non-ELO-aware) base model. Therefore, "Isolated Training" (training from scratch for each ELO bucket) was adopted for the Maia-2 experiments.
 
-```
-
 ### ⚖️ Final Decision: Architecture vs. Resources
 
 A critical realization during this project was the trade-off between **Architectural Superiority** and **Training Depth**.
@@ -104,6 +96,6 @@ A critical realization during this project was the trade-off between **Architect
 * **Practice (Legacy):** However, the 14-Channel model benefits from **Transfer Learning** via a massive "Base Model" pre-trained for 33+ hours.
 
 **Verdict:**
-Despite the design advantages of Maia-2, the **14-Channel (Legacy) model was selected for production**. Empirical benchmarks proved that **Transfer Learning (Knowledge Reuse)** currently yields higher accuracy (~51%) than training a superior architecture from scratch (~44%) under fixed computational constraints.
+Despite the design advantages of Maia-2, the **14-Channel (Legacy) model was selected for production**. Empirical benchmarks proved that **Transfer Learning (Knowledge Reuse)** currently yields higher accuracy (~52% Top-1 for 2400+) than training a superior architecture from scratch (~44%) under fixed computational constraints.
 
 Maia-2 remains the "Future Direction" of this research, requiring significantly more GPU hours to surpass the Legacy baseline.

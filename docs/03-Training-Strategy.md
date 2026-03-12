@@ -59,7 +59,7 @@ For the advanced **19-channel architecture**, we abandoned transfer learning in 
 
 * **Target:** 2400+ ELO Bucket.
 * **Configuration:** 300,000 Steps, 19-Channel Input (Rule-Aware).
-* **Outcome:** While conceptually superior, the Isolated Training approach yielded lower accuracy (~44%) compared to the Transfer Learning approach (~55%) due to the lack of massive pre-training.
+* **Outcome:** While conceptually superior, the Isolated Training approach yielded lower accuracy (~44%) compared to the Transfer Learning approach (~52%) due to the lack of massive pre-training.
 
 ---
 
@@ -73,7 +73,7 @@ For the advanced **19-channel architecture**, we abandoned transfer learning in 
 | **Training Time** | ~1 Hour | ~6.5 Hours |
 
 ### Final Configuration (Best Performing Scientific Model)
-* **Architecture:** ResNet-9 (14 Channels)
-* **Batch Size:** 9216
-* **Optimizer:** SGD with Momentum (0.9)
+* **Architecture:** ResNet-12 (12 Residual Blocks, 256 filters, 14 Channels)
+* **Batch Size:** 8192
+* **Optimizer:** AdamW (weight_decay=1e-4)
 * **Loss Function:** CrossEntropyLoss
